@@ -1,6 +1,5 @@
 import random
 import pygame
-from pygame.examples.joystick import BLACK
 
 
 def getPoints(maxX, maxY):
@@ -12,7 +11,7 @@ def getPoints(maxX, maxY):
             [2 * maxX // 9, maxY // 3], [maxX // 3, 3 * maxY // 14]]
 
 
-def drawBoard(maxX, maxY, pointsArray):
+def drawBoard(maxX, maxY, pointsArray, playerTurn):
     pygame.init()
     pygame.display.set_caption("Mancala Oware Abapa")
     screen = pygame.display.set_mode((maxX, maxY))
@@ -20,24 +19,29 @@ def drawBoard(maxX, maxY, pointsArray):
     screen.blit(backgroundImage, (0, 0))
     pointsDrawn = 0
     circles = []
+    pygame.draw.circle(screen, pygame.Color(220, 20, 60) if not playerTurn else pygame.Color(0, 0, 139),
+                       (maxX / 2, maxY / 2), 33)
     for x in pointsArray:
         circles.append(
             pygame.draw.circle(screen, pygame.Color(220, 20, 60) if pointsDrawn < 6 else pygame.Color(0, 0, 139),
                                (x[0], x[1]), 33, width=5))
         pointsDrawn += 1
     pygame.display.flip()
-    return circles, screen
+    return circles
 
 
-def drawNumber(num, point, screen):
-    font = pygame.font.SysFont('ComicSans', 16)
-    image = font.render(str(num), True, BLACK).convert_alpha()
-    screen.blit(image, (point[0], point[1]))
+def drawNumber(num, point, color, fontSize):
+    font = pygame.font.SysFont('ComicSans', fontSize)
+    image = font.render(str(num), True, color).convert_alpha()
+    pygame.display.get_surface().blit(image, (point[0], point[1]))
 
 
-def updateBoard(points, board, screen):
+def updateBoard(points, board, scores):
     for point, value in zip(points, board):
-        drawNumber(value, point, screen)
+        drawNumber(value, point, (0, 0, 0), 16)
+    x, y = pygame.display.get_surface().get_size()
+    drawNumber(scores[1], (x / 2 - 80, y / 2 - 32), (0, 0, 255), 32)
+    drawNumber(scores[0], (x / 2 + 48, y / 2 - 32), (255, 0, 0), 32)
     pygame.display.flip()
 
 
@@ -58,27 +62,33 @@ def sow(board, index, playerTurn):
     return score
 
 
+def initiateGame():
+    return random.randrange(0, 2), [0, 0], [4] * 12
+
+
 def main():
     maxX, maxY = 612, 612
     points = getPoints(maxX, maxY)
-    board = [4] * 12
-    circles, screen = drawBoard(maxX, maxY, points)
-    updateBoard(points, board, screen)
     running = True
-
-    playerTurn = random.randrange(0, 2)
-    scores = [0, 0]
-
+    playerTurn, scores, board = initiateGame()
+    circles = drawBoard(maxX, maxY, points, playerTurn)
+    updateBoard(points, board, scores)
+    clickable = True
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.MOUSEBUTTONUP:
+            if event.type == pygame.MOUSEBUTTONUP and clickable:
                 pos = pygame.mouse.get_pos()
                 clicked = [circles.index(c) for c in circles if c.collidepoint(pos)]
-                if clicked and (0 <= clicked[0] < 6 and playerTurn == 0) or (6 <= clicked[0] < 12 and playerTurn == 1):
-                    scores[playerTurn] += sow(board, clicked[0], playerTurn)
-                    circles, screen = drawBoard(maxX, maxY, points)
-                    updateBoard(points, board, screen)
-                    playerTurn = 1 - playerTurn
+                if clicked:
+                    if ((0 <= clicked[0] < 6 and playerTurn == 0) or (6 <= clicked[0] < 12 and playerTurn == 1)) \
+                            and board[clicked[0]]:
+                        scores[playerTurn] += sow(board, clicked[0], playerTurn)
+                        playerTurn = 1 - playerTurn
+                        circles = drawBoard(maxX, maxY, points, playerTurn)
+                        updateBoard(points, board, scores)
+                        if scores[0] >= 25 or scores[1] >= 25:
+                            clickable = False
+
             if event.type == pygame.QUIT:
                 running = False
 
