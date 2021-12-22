@@ -1,5 +1,6 @@
 import random
 import pygame
+from copy import deepcopy
 
 
 def getPoints(maxX, maxY):
@@ -59,11 +60,16 @@ def sow(board, index, playerTurn):
             board[currentSpot] = 0
         currentSpot -= 1
         board[index] -= 1
-    return score
+    return board, score
 
 
 def initiateGame():
     return random.randrange(0, 2), [0, 0], [4] * 12
+
+
+def lookAhead(board, index, playerTurn):
+    board, _ = sow(board, index, playerTurn)
+    return sum(board[0:6]) != 0 if playerTurn == 1 else sum(board[6:12]) != 0
 
 
 def main():
@@ -81,8 +87,9 @@ def main():
                 clicked = [circles.index(c) for c in circles if c.collidepoint(pos)]
                 if clicked:
                     if ((0 <= clicked[0] < 6 and playerTurn == 0) or (6 <= clicked[0] < 12 and playerTurn == 1)) \
-                            and board[clicked[0]]:
-                        scores[playerTurn] += sow(board, clicked[0], playerTurn)
+                            and board[clicked[0]] and lookAhead(deepcopy(board), clicked[0], playerTurn):
+                        board, score = sow(deepcopy(board), clicked[0], playerTurn)
+                        scores[playerTurn] += score
                         playerTurn = 1 - playerTurn
                         circles = drawBoard(maxX, maxY, points, playerTurn)
                         updateBoard(points, board, scores)
