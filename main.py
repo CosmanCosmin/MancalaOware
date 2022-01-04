@@ -1,4 +1,6 @@
 import random
+import sys
+
 import pygame
 from copy import deepcopy
 
@@ -72,7 +74,7 @@ def lookAhead(board, index, playerTurn):
     return sum(board[0:6]) != 0 if playerTurn == 1 else sum(board[6:12]) != 0
 
 
-def main():
+def play():
     maxX, maxY = 612, 612
     points = getPoints(maxX, maxY)
     running = True
@@ -80,9 +82,10 @@ def main():
     circles = drawBoard(maxX, maxY, points, playerTurn)
     updateBoard(points, board, scores)
     clickable = True
+    click = False
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.MOUSEBUTTONUP and clickable:
+            if click:
                 pos = pygame.mouse.get_pos()
                 clicked = [circles.index(c) for c in circles if c.collidepoint(pos)]
                 if clicked:
@@ -95,9 +98,50 @@ def main():
                         updateBoard(points, board, scores)
                         if scores[0] >= 25 or scores[1] >= 25:
                             clickable = False
+            click = False
+            if event.type == pygame.MOUSEBUTTONDOWN and clickable:
+                if event.button == 1:
+                    click = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
+
+class Button:
+    def __init__(self, image, position, callback):
+        self.image = image
+        self.rect = image.get_rect(topleft=position)
+        self.callback = callback
+
+    def onClick(self, event):
+        if event.button == 1:
+            if self.rect.collidepoint(event.pos):
+                self.callback()
+
+
+def main():
+    running = True
+    pygame.init()
+    pygame.display.set_caption("Mancala Oware Abapa")
+    backgroundImage = pygame.image.load("main_menu.jpg")
+    buttonImage = pygame.image.load("main_button.jpg")
+
+    while running:
+        screen = pygame.display.set_mode((626, 366))
+        screen.blit(backgroundImage, (0, 0))
+        twoPlayerButton = Button(buttonImage, (10, 10), play)
+        screen.blit(twoPlayerButton.image, twoPlayerButton.rect)
+
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pass
+                twoPlayerButton.onClick(event)
+        pygame.display.update()
 
 
 if __name__ == '__main__':
