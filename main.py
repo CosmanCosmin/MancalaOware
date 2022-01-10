@@ -122,6 +122,52 @@ class Button:
                 self.callback()
 
 
+def playWithAI():
+    maxX, maxY = 612, 612
+    points = getPoints(maxX, maxY)
+    running = True
+    playerTurn, scores, board = initiateGame()
+    circles = drawBoard(maxX, maxY, points, playerTurn)
+    updateBoard(points, board, scores)
+    clickable = True
+    click = False
+    while running:
+        for event in pygame.event.get():
+            if click:
+                pos = pygame.mouse.get_pos()
+                clicked = [circles.index(c) for c in circles if c.collidepoint(pos)]
+                if playerTurn == 1:
+                    spot = random.randint(6, 11)
+                    while not board[spot] or not lookAhead(deepcopy(board), spot, playerTurn):
+                        spot = random.randint(6, 11)
+                    board, score = sow(deepcopy(board), spot, playerTurn)
+                    scores[playerTurn] += score
+                    playerTurn = 0
+                    circles = drawBoard(maxX, maxY, points, playerTurn)
+                    updateBoard(points, board, scores)
+
+                if clicked and playerTurn == 0:
+                    if (0 <= clicked[0] < 6) and board[clicked[0]] and lookAhead(deepcopy(board), clicked[0],
+                                                                                 playerTurn):
+                        board, score = sow(deepcopy(board), clicked[0], playerTurn)
+                        scores[playerTurn] += score
+                        playerTurn = 1
+                        circles = drawBoard(maxX, maxY, points, playerTurn)
+                        updateBoard(points, board, scores)
+                if scores[0] >= 25 or scores[1] >= 25:
+                    clickable = False
+            click = False
+            if event.type == pygame.MOUSEBUTTONDOWN and clickable:
+                if event.button == 1:
+                    click = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+
 def main():
     running = True
     pygame.init()
@@ -130,17 +176,19 @@ def main():
     buttonImage = pygame.image.load("main_button.jpg")
 
     while running:
-        screen = pygame.display.set_mode((626, 366))
+        screen = pygame.display.set_mode((612, 612))
         screen.blit(backgroundImage, (0, 0))
-        twoPlayerButton = Button(buttonImage, (10, 10), play)
+        twoPlayerButton = Button(buttonImage, (260, 220), play)
+        playWithAIButton = Button(buttonImage, (260, 320), playWithAI)
         screen.blit(twoPlayerButton.image, twoPlayerButton.rect)
+        screen.blit(playWithAIButton.image, playWithAIButton.rect)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                pass
                 twoPlayerButton.onClick(event)
+                playWithAIButton.onClick(event)
         pygame.display.update()
 
 
