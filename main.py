@@ -168,7 +168,7 @@ def play():
                         playerTurn = 1 - playerTurn
                         circles = drawBoard(maxX, maxY, points, playerTurn)
                         updateBoard(points, board, scores)
-                        if scores[0] >= 1 or scores[1] >= 1:
+                        if scores[0] >= 25 or scores[1] >= 25:
                             clickable = False
                             victory(1 - playerTurn)
             click = False
@@ -218,7 +218,7 @@ def playWithAI():
                         playerTurn = 1
                         circles = drawBoard(maxX, maxY, points, playerTurn)
                         updateBoard(points, board, scores)
-                if scores[0] >= 1 or scores[1] >= 1:
+                if scores[0] >= 25 or scores[1] >= 25:
                     clickable = False
                     victory(1 - playerTurn)
             click = False
